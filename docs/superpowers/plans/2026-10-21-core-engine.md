@@ -1618,7 +1618,7 @@ describe("step", () => {
   });
 
   it("loses when zombies overrun the squad", () => {
-    const crowd = Array.from({ length: 6 }, () => makeZombie({ x: 200, y: 590 }));
+    const crowd = Array.from({ length: 6 }, () => makeZombie({ x: 200, y: 600 }));
     const start = makeState({ squad: { x: 200, count: 5 }, zombies: crowd });
     expect(run(start, 5).status).toBe("lost");
   });
@@ -2192,9 +2192,11 @@ type Hook = {
   state(): { squad: { x: number; count: number }; status: string };
   fastForward(ticks: number, targetX: number): void;
 };
-const hook = () => (window as unknown as { __game: Hook }).__game;
-const squadX = (page: Page) => page.evaluate(() => hook().state().squad.x);
-const status = (page: Page) => page.evaluate(() => hook().state().status);
+// page.evaluate callbacks run in the browser, so they cannot close over Node-side helpers.
+const squadX = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __game: Hook }).__game.state().squad.x);
+const status = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __game: Hook }).__game.state().status);
 
 test("loads and renders with no console errors", async ({ page }) => {
   const errors: string[] = [];
@@ -2221,7 +2223,9 @@ test("pointer movement shifts the squad", async ({ page }) => {
 
 test("a run reaches an end state and restarts on a key press", async ({ page }) => {
   await page.goto("/?seed=1");
-  await page.evaluate(() => hook().fastForward(4000, 200));
+  await page.evaluate(() =>
+    (window as unknown as { __game: Hook }).__game.fastForward(4000, 200),
+  );
   await expect.poll(() => status(page)).not.toBe("playing");
   await page.waitForTimeout(600); // restart is ignored briefly so the final key press cannot skip the result
   await page.keyboard.press("Space");
