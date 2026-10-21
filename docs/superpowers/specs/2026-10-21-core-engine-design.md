@@ -54,7 +54,7 @@ type GameState = {
 type Input = { targetX: number };
 ```
 
-Constants (in one `constants.ts`): `LANE_WIDTH`, `MAX_VISIBLE = 30`, `MAX_BULLETS`, `MAX_ZOMBIES`, `FIRE_INTERVAL`, `BASE_DAMAGE`, `SQUAD_SPEED`.
+Constants (in one `constants.ts`): `WORLD_WIDTH` (the lane width), `MAX_VISIBLE = 30`, `MAX_BULLETS`, `MAX_ZOMBIES`, `FIRE_INTERVAL`, `BASE_DAMAGE`, `SQUAD_SPEED`.
 
 ## Rules (run in this order each tick)
 
