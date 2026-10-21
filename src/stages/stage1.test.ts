@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TICK } from "../core/constants";
+import { POWER_KINDS, TICK } from "../core/constants";
 import { validateStage } from "../core/stage";
 import { createInitialState } from "../core/state";
 import { step } from "../core/step";
@@ -25,6 +25,11 @@ function play(seed: number): { state: GameState; ticks: number } {
 describe("stage1", () => {
   it("is a valid stage", () => {
     expect(() => validateStage(stage1)).not.toThrow();
+  });
+
+  it("offers one crate of every power-up", () => {
+    const powers = stage1.spawns.flatMap((s) => (s.type === "crate" ? [s.power] : []));
+    expect([...powers].sort()).toEqual([...POWER_KINDS].sort());
   });
 
   it("replays identically for the same seed", () => {

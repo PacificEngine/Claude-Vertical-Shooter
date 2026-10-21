@@ -10,9 +10,19 @@ export function zombiesVsSquad(state: GameState): GameState {
   const hits = state.zombies.filter(reachesSquad).length;
   const zombies = state.zombies.filter((z) => !reachesSquad(z) && !offScreen(z));
 
+  let power = state.power;
+  let lost = hits;
+  if (power?.kind === "shield") {
+    const absorbed = Math.min(hits, power.charges);
+    lost = hits - absorbed;
+    const charges = power.charges - absorbed;
+    power = charges > 0 ? { ...power, charges } : null;
+  }
+
   return {
     ...state,
     zombies,
-    squad: { ...state.squad, count: Math.max(0, state.squad.count - hits) },
+    power,
+    squad: { ...state.squad, count: Math.max(0, state.squad.count - lost) },
   };
 }

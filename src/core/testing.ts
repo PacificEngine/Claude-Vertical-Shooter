@@ -1,16 +1,24 @@
 import { createInitialState } from "./state";
-import type { Bullet, GameState, Gate, Input, Zombie } from "./types";
+import type { Bullet, Crate, GameState, Gate, Input, Pickup, Zombie } from "./types";
 
 export function makeState(overrides: Partial<GameState> = {}): GameState {
   return { ...createInitialState({ length: 1000, spawns: [] }, 1), ...overrides };
 }
 
 export function makeBullet(o: Partial<Bullet> = {}): Bullet {
-  return { x: 200, y: 300, damage: 1, passedGates: [], ...o };
+  return { x: 200, y: 300, damage: 1, passedGates: [], vx: 0, pierce: false, hit: [], splash: 0, ...o };
 }
 
 export function makeZombie(o: Partial<Zombie> = {}): Zombie {
-  return { x: 200, y: 100, hp: 1, speed: 0, ...o };
+  return { id: 0, x: 200, y: 100, hp: 1, speed: 0, ...o };
+}
+
+export function makeCrate(o: Partial<Crate> = {}): Crate {
+  return { x: 200, y: 300, hp: 3, power: "rapid", ...o };
+}
+
+export function makePickup(o: Partial<Pickup> = {}): Pickup {
+  return { x: 200, y: 300, power: "rapid", ...o };
 }
 
 export function makeGate(o: Partial<Gate> = {}): Gate {

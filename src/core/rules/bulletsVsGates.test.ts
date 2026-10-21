@@ -84,4 +84,13 @@ describe("bulletsVsGates", () => {
     expect(next.gates[0].value).toBe(4);
     expect(next.bullets).toHaveLength(2 + 2 + 3);
   });
+
+  it("gives mul copies their own hit lists", () => {
+    const next = bulletsVsGates(
+      makeState({ bullets: [makeBullet({ hit: [7] })], gates: [makeGate({ op: "mul", value: 2 })] }),
+    );
+    expect(next.bullets).toHaveLength(3);
+    expect(next.bullets[0].hit).toEqual([7]);
+    expect(next.bullets[0].hit).not.toBe(next.bullets[1].hit);
+  });
 });

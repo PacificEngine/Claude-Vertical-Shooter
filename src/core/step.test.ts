@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { TICK } from "./constants";
+import { POWER_DURATION, SHIELD_CHARGES, SQUAD_Y, TICK } from "./constants";
 import { step } from "./step";
-import { makeState, makeZombie, noInput } from "./testing";
+import { makeCrate, makePickup, makeState, makeZombie, noInput } from "./testing";
 import type { GameState } from "./types";
 
 const run = (state: GameState, ticks: number): GameState => {
@@ -42,5 +42,52 @@ describe("step", () => {
     const snapshot = structuredClone(start);
     step(start, noInput, TICK);
     expect(start).toEqual(snapshot);
+  });
+});
+
+describe("step with power-ups", () => {
+  it("opens a crate in the line of fire and leaves a pickup", () => {
+    const start = makeState({
+      squad: { x: 200, count: 1 },
+      crates: [makeCrate({ x: 200, y: 300, hp: 1, power: "tank" })],
+    });
+    const end = run(start, 60);
+    expect(end.crates).toHaveLength(0);
+    expect(end.pickups.map((p) => p.power)).toEqual(["tank"]);
+  });
+
+  it("grants a power-up when the squad touches a pickup", () => {
+    const start = makeState({ squad: { x: 200, count: 5 }, pickups: [makePickup({ y: SQUAD_Y, power: "rapid" })] });
+    const next = step(start, noInput, TICK);
+    // powerTimer runs before pickups resolve, so the new timer starts full this tick.
+    expect(next.power).toEqual({ kind: "rapid", remaining: POWER_DURATION.rapid, charges: 0 });
+    expect(next.pickups).toHaveLength(0);
+  });
+
+  it("expires a power-up after its duration", () => {
+    const start = makeState({ power: { kind: "rapid", remaining: 0.05, charges: 0 } });
+    expect(run(start, 5).power).toBeNull();
+  });
+
+  it("a shield collected this tick already protects against a zombie arriving this tick", () => {
+    const start = makeState({
+      squad: { x: 200, count: 5 },
+      pickups: [makePickup({ y: SQUAD_Y, power: "shield" })],
+      zombies: [makeZombie({ x: 200, y: SQUAD_Y, hp: 99 })],
+    });
+    const next = step(start, noInput, TICK);
+    expect(next.squad.count).toBe(5);
+    expect(next.power?.charges).toBe(SHIELD_CHARGES - 1);
+  });
+
+  it("a bomb collected this tick clears a zombie before it can hit", () => {
+    const start = makeState({
+      squad: { x: 200, count: 5 },
+      pickups: [makePickup({ y: SQUAD_Y, power: "bomb" })],
+      zombies: [makeZombie({ x: 200, y: SQUAD_Y, hp: 5 })],
+    });
+    const next = step(start, noInput, TICK);
+    expect(next.zombies).toHaveLength(0);
+    expect(next.squad.count).toBe(5);
   });
 });

@@ -5,6 +5,7 @@ import type { Spawn, Stage } from "./types";
 type GateSpawn = Extract<Spawn, { type: "gate" }>;
 type WaveSpawn = Extract<Spawn, { type: "zombieWave" }>;
 type ZombieSpawn = Extract<Spawn, { type: "zombie" }>;
+type CrateSpawn = Extract<Spawn, { type: "crate" }>;
 
 const gate = (o: Partial<GateSpawn> = {}): Spawn => ({
   at: 10, type: "gate", kind: "bullet", op: "mul", value: 2, x: 200, width: 100, ...o,
@@ -14,6 +15,9 @@ const wave = (o: Partial<WaveSpawn> = {}): Spawn => ({
 });
 const zombie = (o: Partial<ZombieSpawn> = {}): Spawn => ({
   at: 10, type: "zombie", x: 200, hp: 1, speed: 40, ...o,
+});
+const crate = (o: Partial<CrateSpawn> = {}): Spawn => ({
+  at: 10, type: "crate", x: 200, hp: 3, power: "tank", ...o,
 });
 const stage = (spawns: Spawn[], length = 1000): Stage => ({ length, spawns });
 
@@ -63,5 +67,15 @@ describe("validateStage", () => {
     expect(() => validateStage(stage([zombie({ x: 500 })]))).toThrow(/Spawn 0.*lane/);
     expect(() => validateStage(stage([wave({ spread: [300, 100] })]))).toThrow(/Spawn 0.*spread/);
     expect(() => validateStage(stage([wave({ spread: [-10, 100] })]))).toThrow(/Spawn 0.*spread/);
+  });
+
+  it("accepts a valid crate", () => {
+    expect(() => validateStage(stage([crate()]))).not.toThrow();
+  });
+
+  it("rejects crates with non-positive hp, x outside the lane, or an unknown power", () => {
+    expect(() => validateStage(stage([crate({ hp: 0 })]))).toThrow(/Spawn 0.*hp/);
+    expect(() => validateStage(stage([crate({ x: 500 })]))).toThrow(/Spawn 0.*lane/);
+    expect(() => validateStage(stage([crate({ power: "laser" as never })]))).toThrow(/Spawn 0.*power/);
   });
 });

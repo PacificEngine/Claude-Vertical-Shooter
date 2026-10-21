@@ -1,6 +1,6 @@
 import { MAX_ZOMBIES, SPAWN_Y, ZOMBIE_STAGGER } from "../constants";
 import { nextRandom } from "../rng";
-import type { GameState, Gate, Zombie } from "../types";
+import type { Crate, GameState, Gate, Zombie } from "../types";
 
 export function spawnRule(state: GameState): GameState {
   const { scrollY, spawns } = state.stage;
@@ -8,9 +8,11 @@ export function spawnRule(state: GameState): GameState {
   let rng = state.rng;
   const zombies: Zombie[] = [...state.zombies];
   const gates: Gate[] = [...state.gates];
+  const crates: Crate[] = [...state.crates];
+  let nextId = state.nextId;
 
-  const addZombie = (zombie: Zombie) => {
-    if (zombies.length < MAX_ZOMBIES) zombies.push(zombie);
+  const addZombie = (zombie: Omit<Zombie, "id">) => {
+    if (zombies.length < MAX_ZOMBIES) zombies.push({ ...zombie, id: nextId++ });
   };
 
   while (cursor < spawns.length && spawns[cursor].at <= scrollY) {
@@ -34,9 +36,12 @@ export function spawnRule(state: GameState): GameState {
           kind: spawn.kind, op: spawn.op, value: spawn.value,
         });
         break;
+      case "crate":
+        crates.push({ x: spawn.x, y: SPAWN_Y, hp: spawn.hp, power: spawn.power });
+        break;
     }
     cursor++;
   }
 
-  return { ...state, zombies, gates, rng, stage: { ...state.stage, spawnCursor: cursor } };
+  return { ...state, zombies, gates, crates, rng, nextId, stage: { ...state.stage, spawnCursor: cursor } };
 }

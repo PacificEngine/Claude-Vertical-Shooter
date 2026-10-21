@@ -1,3 +1,5 @@
+import type { ActivePowerKind, PowerKind } from "./types";
+
 export const WORLD_WIDTH = 400;
 export const WORLD_HEIGHT = 700;
 export const SQUAD_Y = 620;
@@ -21,3 +23,17 @@ export const SOLDIER_SPACING = 14;
 export const KEY_SPEED = 300; // keyboard nudge, units per second
 export const TICK = 1 / 60;
 export const MAX_FRAME_SECONDS = 0.25;
+
+export const POWER_KINDS: readonly PowerKind[] = ["tank", "spread", "shield", "rapid", "pierce", "bomb"];
+export const POWER_DURATION: Record<ActivePowerKind, number> = {
+  tank: 8, spread: 10, shield: 10, rapid: 8, pierce: 8,
+};
+export const SHIELD_CHARGES = 5;
+export const BOMB_DAMAGE = 10;
+export const TANK_DAMAGE_MULT = 2;
+export const TANK_RATE_MULT = 3; // tank fires this many times slower
+export const TANK_SPLASH = 40;
+export const RAPID_RATE_MULT = 0.5; // rapid fires twice as often
+export const SPREAD_VX = 160; // about 15 degrees at BULLET_SPEED
+export const CRATE_SIZE = 28;
+export const PICKUP_SIZE = 24;

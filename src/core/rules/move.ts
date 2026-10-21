@@ -1,5 +1,5 @@
 import {
-  BULLET_MARGIN, BULLET_SPEED, GATE_HEIGHT, SCROLL_SPEED, SQUAD_HALF_WIDTH, SQUAD_SPEED,
+  BULLET_MARGIN, BULLET_SPEED, CRATE_SIZE, GATE_HEIGHT, PICKUP_SIZE, SCROLL_SPEED, SQUAD_HALF_WIDTH, SQUAD_SPEED,
   WORLD_HEIGHT, WORLD_WIDTH,
 } from "../constants";
 import { clamp } from "../math";
@@ -14,12 +14,18 @@ export function moveRule(state: GameState, input: Input, dt: number): GameState 
     ...state,
     squad: { ...state.squad, x },
     bullets: state.bullets
-      .map((b) => ({ ...b, y: b.y - BULLET_SPEED * dt }))
-      .filter((b) => b.y >= -BULLET_MARGIN),
+      .map((b) => ({ ...b, x: b.x + b.vx * dt, y: b.y - BULLET_SPEED * dt }))
+      .filter((b) => b.y >= -BULLET_MARGIN && b.x >= -BULLET_MARGIN && b.x <= WORLD_WIDTH + BULLET_MARGIN),
     zombies: state.zombies.map((z) => ({ ...z, y: z.y + z.speed * dt })),
     gates: state.gates
       .map((g) => ({ ...g, y: g.y + SCROLL_SPEED * dt }))
       .filter((g) => g.y <= WORLD_HEIGHT + GATE_HEIGHT),
+    crates: state.crates
+      .map((c) => ({ ...c, y: c.y + SCROLL_SPEED * dt }))
+      .filter((c) => c.y <= WORLD_HEIGHT + CRATE_SIZE),
+    pickups: state.pickups
+      .map((p) => ({ ...p, y: p.y + SCROLL_SPEED * dt }))
+      .filter((p) => p.y <= WORLD_HEIGHT + PICKUP_SIZE),
     stage: { ...state.stage, scrollY: state.stage.scrollY + SCROLL_SPEED * dt },
   };
 }

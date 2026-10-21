@@ -1,8 +1,8 @@
 import {
-  GATE_HEIGHT, MAX_VISIBLE, SQUAD_Y, WORLD_HEIGHT, WORLD_WIDTH, ZOMBIE_RADIUS,
+  CRATE_SIZE, GATE_HEIGHT, MAX_VISIBLE, PICKUP_SIZE, POWER_DURATION, SQUAD_Y, WORLD_HEIGHT, WORLD_WIDTH, ZOMBIE_RADIUS,
 } from "../core/constants";
 import { soldierOffsets } from "../core/formation";
-import type { GameState, Gate } from "../core/types";
+import type { GameState, Gate, PowerKind } from "../core/types";
 
 export type Viewport = { width: number; height: number };
 
@@ -13,6 +13,11 @@ export function gateLabel(gate: Pick<Gate, "op" | "value">): string {
     case "mul": return `x${gate.value}`;
   }
 }
+
+const LABELS: Record<PowerKind, string> = {
+  tank: "TANK", spread: "SPRD", shield: "SHLD", rapid: "RAPD", pierce: "PRCE", bomb: "BOMB",
+};
+export const powerLabel = (kind: PowerKind): string => LABELS[kind];
 
 const GATE_COLORS = { bullet: "rgba(255, 190, 60, 0.45)", squad: "rgba(80, 170, 255, 0.45)" };
 
@@ -27,9 +32,12 @@ export function draw(ctx: CanvasRenderingContext2D, state: GameState, viewport: 
 
   drawFinishLine(ctx, state);
   drawGates(ctx, state);
+  drawCrates(ctx, state);
+  drawPickups(ctx, state);
   drawZombies(ctx, state);
   drawBullets(ctx, state);
   drawSquad(ctx, state);
+  drawHud(ctx, state);
   if (state.status !== "playing") drawOverlay(ctx, state);
 
   ctx.restore();
@@ -54,6 +62,35 @@ function drawGates(ctx: CanvasRenderingContext2D, state: GameState): void {
   }
 }
 
+function drawCrates(ctx: CanvasRenderingContext2D, state: GameState): void {
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 10px sans-serif";
+  for (const c of state.crates) {
+    ctx.fillStyle = "#8a5a2b";
+    ctx.fillRect(c.x - CRATE_SIZE / 2, c.y - CRATE_SIZE / 2, CRATE_SIZE, CRATE_SIZE);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(powerLabel(c.power), c.x, c.y - 5);
+    ctx.fillText(`${c.hp}`, c.x, c.y + 7);
+  }
+}
+
+function drawPickups(ctx: CanvasRenderingContext2D, state: GameState): void {
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 10px sans-serif";
+  for (const p of state.pickups) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = "#4de08a";
+    ctx.fillRect(-PICKUP_SIZE / 3, -PICKUP_SIZE / 3, (PICKUP_SIZE * 2) / 3, (PICKUP_SIZE * 2) / 3);
+    ctx.restore();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(powerLabel(p.power), p.x, p.y + PICKUP_SIZE / 2 + 8);
+  }
+}
+
 function drawZombies(ctx: CanvasRenderingContext2D, state: GameState): void {
   ctx.fillStyle = "#58a04a";
   for (const z of state.zombies) {
@@ -62,23 +99,58 @@ function drawZombies(ctx: CanvasRenderingContext2D, state: GameState): void {
 }
 
 function drawBullets(ctx: CanvasRenderingContext2D, state: GameState): void {
-  ctx.fillStyle = "#ffe066";
-  for (const b of state.bullets) ctx.fillRect(b.x - 1.5, b.y - 5, 3, 10);
+  for (const b of state.bullets) {
+    if (b.splash > 0) {
+      ctx.fillStyle = "#ff9a3c";
+      ctx.fillRect(b.x - 4, b.y - 8, 8, 16);
+    } else {
+      ctx.fillStyle = b.pierce ? "#7fe0ff" : "#ffe066";
+      ctx.fillRect(b.x - 1.5, b.y - 5, 3, 10);
+    }
+  }
 }
 
 function drawSquad(ctx: CanvasRenderingContext2D, state: GameState): void {
-  const visible = Math.min(state.squad.count, MAX_VISIBLE);
-  ctx.fillStyle = "#e8e8f0";
-  for (const { dx, dy } of soldierOffsets(visible)) {
-    ctx.beginPath();
-    ctx.arc(state.squad.x + dx, SQUAD_Y + dy, 5, 0, Math.PI * 2);
-    ctx.fill();
+  if (state.power?.kind === "tank") {
+    ctx.fillStyle = "#8fa37a";
+    ctx.fillRect(state.squad.x - 22, SQUAD_Y - 8, 44, 24);
+    ctx.fillRect(state.squad.x - 4, SQUAD_Y - 30, 8, 26);
+  } else {
+    const visible = Math.min(state.squad.count, MAX_VISIBLE);
+    ctx.fillStyle = "#e8e8f0";
+    for (const { dx, dy } of soldierOffsets(visible)) {
+      ctx.beginPath();
+      ctx.arc(state.squad.x + dx, SQUAD_Y + dy, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  if (state.power?.kind === "shield") {
+    ctx.strokeStyle = "#7fe0ff";
+    ctx.strokeRect(state.squad.x - 40, SQUAD_Y - 36, 80, 62);
   }
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 18px sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(`${state.squad.count}`, state.squad.x, SQUAD_Y - 24);
+}
+
+function drawHud(ctx: CanvasRenderingContext2D, state: GameState): void {
+  const power = state.power;
+  if (!power) return;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(powerLabel(power.kind), 10, 10);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+  ctx.fillRect(10, 30, 100, 6);
+  ctx.fillStyle = "#4de08a";
+  ctx.fillRect(10, 30, (power.remaining / POWER_DURATION[power.kind]) * 100, 6);
+  if (power.kind === "shield") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(`${power.charges} left`, 10, 42);
+  }
 }
 
 function drawOverlay(ctx: CanvasRenderingContext2D, state: GameState): void {

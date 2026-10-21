@@ -1,4 +1,4 @@
-import { WORLD_WIDTH } from "./constants";
+import { POWER_KINDS, WORLD_WIDTH } from "./constants";
 import type { Stage } from "./types";
 
 export function validateStage(stage: Stage): void {
@@ -36,6 +36,11 @@ export function validateStage(stage: Stage): void {
         if (!Number.isInteger(spawn.value)) fail("value must be an integer");
         if (spawn.op === "mul" && spawn.value < 1) fail("mul value must be at least 1");
         if (spawn.op === "sub" && spawn.value >= 0) fail("sub value must be negative");
+        break;
+      case "crate":
+        if (spawn.hp <= 0) fail("hp must be positive");
+        if (spawn.x < 0 || spawn.x > WORLD_WIDTH) fail("x is outside the lane");
+        if (!POWER_KINDS.includes(spawn.power)) fail(`unknown power "${spawn.power}"`);
         break;
     }
   });

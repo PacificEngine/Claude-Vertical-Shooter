@@ -12,6 +12,6 @@ exports[`stage1 > can be won by a player who keeps moving 1`] = `
   },
   "status": "won",
   "ticks": 3400,
-  "zombiesAlive": 17,
+  "zombiesAlive": 5,
 }
 `;

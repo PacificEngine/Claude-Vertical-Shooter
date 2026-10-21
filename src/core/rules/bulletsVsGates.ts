@@ -30,7 +30,9 @@ export function bulletsVsGates(state: GameState): GameState {
         if (total + copies > MAX_BULLETS) {
           bullet = { ...bullet, damage: bullet.damage * gate.value };
         } else {
-          for (let i = 0; i < copies; i++) bullets.push({ ...bullet, passedGates: [...bullet.passedGates] });
+          for (let i = 0; i < copies; i++) {
+            bullets.push({ ...bullet, passedGates: [...bullet.passedGates], hit: [...bullet.hit] });
+          }
           total += copies;
         }
       } else {
