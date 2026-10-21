@@ -46,7 +46,7 @@ type GameState = {
   zombies: { x: number; y: number; hp: number; speed: number }[];
   gates: { id: number; x: number; y: number; width: number;
            kind: "bullet" | "squad"; op: "add" | "sub" | "mul"; value: number }[];
-  stage: { scrollY: number; length: number; spawnCursor: number };
+  stage: { scrollY: number; length: number; spawnCursor: number; spawns: Spawn[] };
   rng: number;
   fireTimer: number;
   status: "playing" | "won" | "lost";
@@ -86,9 +86,17 @@ type Spawn =
       value: number; x: number; width: number };
 ```
 
-`zombieWave` expands to individual zombies, picking x within `spread` from the seeded RNG. `validateStage` rejects: spawns not sorted by `at`; `at` outside `[0, length]`; gates extending outside the lane; `mul` value below 1; non-positive `hp`, `speed` or `count`. Errors name the offending spawn index.
+`zombieWave` expands to individual zombies, picking x within `spread` from the seeded RNG. `validateStage` rejects: non-positive `length`; spawns not sorted by `at`; `at` outside `[0, length]`; gates extending outside the lane or with non-integer `value`; `mul` value below 1; `sub` value that is not negative (sub values are stored negative, e.g. -100); non-positive `hp`, `speed` or `count`; wave spread outside the lane. Errors name the offending spawn index.
 
 Piece 1 ships one hand-written stage, `stages/stage1.ts`: a few bullet-gate and squad-gate pairs and escalating waves.
+
+## Clarifications settled during planning
+
+- A spawn appears at `y = SPAWN_Y` when `scrollY` reaches its `at`, and a gate reaches the squad 640 units of scroll later. The finish line is drawn at `y = SQUAD_Y - (length - scrollY)` and wins on reaching the squad, so stages should end their spawns about 700 before `length`.
+- Wave zombies are staggered vertically (`ZOMBIE_STAGGER`) and get random x from the seeded RNG. Spawns beyond `MAX_ZOMBIES` are dropped, but the RNG still advances.
+- Bullet gates and squad gates test overlap using the bullet's or squad's centre x and the gate's vertical band. Gate ids are the spawn index.
+- Zombies that slip past the squad are removed silently once off the bottom of the screen.
+- Co-located tests: `src/**/*.test.ts` (Vitest), `e2e/*.spec.ts` (Playwright).
 
 ## Rendering and input
 
