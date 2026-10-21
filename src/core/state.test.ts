@@ -16,6 +16,10 @@ describe("createInitialState", () => {
     expect(state.stage).toEqual({ scrollY: 0, length: 1000, spawnCursor: 0, spawns: [] });
     expect(state.rng).toBe(99);
     expect(state.fireTimer).toBe(0);
+    expect(state.crates).toEqual([]);
+    expect(state.pickups).toEqual([]);
+    expect(state.power).toBeNull();
+    expect(state.nextId).toBe(0);
   });
 
   it("validates the stage", () => {

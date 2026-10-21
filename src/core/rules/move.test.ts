@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { GATE_HEIGHT, SCROLL_SPEED, WORLD_HEIGHT, WORLD_WIDTH, SQUAD_HALF_WIDTH } from "../constants";
-import { makeBullet, makeGate, makeState, makeZombie } from "../testing";
+import {
+  BULLET_MARGIN, CRATE_SIZE, GATE_HEIGHT, PICKUP_SIZE, SCROLL_SPEED, WORLD_HEIGHT, WORLD_WIDTH, SQUAD_HALF_WIDTH,
+} from "../constants";
+import { makeBullet, makeCrate, makeGate, makePickup, makeState, makeZombie } from "../testing";
 import { moveRule } from "./move";
 
 describe("moveRule", () => {
@@ -49,5 +51,36 @@ describe("moveRule", () => {
     );
     expect(next.gates).toHaveLength(1);
     expect(next.gates[0].y).toBeCloseTo(306);
+  });
+
+  it("scrolls crates and pickups and culls them below the screen", () => {
+    const next = moveRule(
+      makeState({
+        crates: [makeCrate({ y: 300 }), makeCrate({ y: WORLD_HEIGHT + CRATE_SIZE })],
+        pickups: [makePickup({ y: 300 }), makePickup({ y: WORLD_HEIGHT + PICKUP_SIZE })],
+      }),
+      { targetX: 200 },
+      0.1,
+    );
+    expect(next.crates).toHaveLength(1);
+    expect(next.crates[0].y).toBeCloseTo(306);
+    expect(next.pickups).toHaveLength(1);
+    expect(next.pickups[0].y).toBeCloseTo(306);
+  });
+
+  it("moves bullets sideways by vx and culls those that leave the lane", () => {
+    const next = moveRule(
+      makeState({
+        bullets: [
+          makeBullet({ x: 200, vx: 160 }),
+          makeBullet({ x: WORLD_WIDTH + BULLET_MARGIN, vx: 160 }),
+          makeBullet({ x: -BULLET_MARGIN, vx: -160 }),
+        ],
+      }),
+      { targetX: 200 },
+      0.1,
+    );
+    expect(next.bullets).toHaveLength(1);
+    expect(next.bullets[0].x).toBeCloseTo(216);
   });
 });
