@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`stage1 > can be won by a player who keeps moving 1`] = `
+{
+  "gateValues": [],
+  "rng": 496377099,
+  "scrollY": 3400,
+  "soldiers": 3,
+  "squad": {
+    "count": 3,
+    "x": 248,
+  },
+  "status": "won",
+  "ticks": 3400,
+  "zombiesAlive": 17,
+}
+`;
